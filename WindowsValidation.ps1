@@ -16,6 +16,7 @@ function Get-Domain {
     if ($domainInfo.PartOfDomain) {
         return $domainInfo.Domain
     } else {
+        Write-Host "Machine is not joined to a domain.  Please join the system to a domain and try again"
         return $domainInfo.Workgroup
     }
 }
