@@ -1,14 +1,19 @@
+param (
+    [Parameter(Mandatory=$true)]
+    [string]$ESLFilePath
+)
+
 function Test-Privilege {
     try {
         $currentUser = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
         if (-not $currentUser.IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)){
-            Write-Host "This script must be run with elevated privileges. Please run as an administrator."
+            Write-Host "This script must be run with elevated privileges. Please run as an administrator." -ForegroundColor Red
             exit
             }
-        } catch {
-            Write-Host "This script must be run with elevated privileges. Please run as an administrator."
-            exit
-        }
+    } catch {
+        Write-Host "This script must be run with elevated privileges. Please run as an administrator." -ForegroundColor Red
+        exit
+    }
 }
 
 function Get-Domain {
@@ -16,7 +21,7 @@ function Get-Domain {
     if ($domainInfo.PartOfDomain) {
         return $domainInfo.Domain
     } else {
-        Write-Host "Machine is not joined to a domain.  Please join the system to a domain and try again"
+        Write-Host "Machine is not joined to a domain.  Please join the system to a domain and try again" -ForegroundColor Red
         return $domainInfo.Workgroup
     }
 }
@@ -32,13 +37,13 @@ function Get-Inventory ($appNames){
                 Get-ChildItem $key | ForEach-Object {
                     $app = Get-ItemProperty -Path $_.PSPath
                     if ($app.DisplayName -like $appName) {
-                        Write-Host "Application found:" $app.DisplayName
+                        Write-Host "Application found:" $app.DisplayName -ForegroundColor Green
                         $appFound = $true
                         break
                     }
                 }
             } catch {
-                Write-Host "An error occurred while checking the registry: $_"
+                Write-Host "An error occurred while checking the registry: $_" -ForegroundColor Red
                 exit
             }
             
@@ -48,7 +53,7 @@ function Get-Inventory ($appNames){
         }
     
         if (-not $appFound) {
-            Write-Host "Application not found:" $appName
+            Write-Host "Application not found:" $appName -ForegroundColor Red
         }
     }
 }
@@ -62,7 +67,7 @@ function Install-ExcelModule {
         try {
             Install-Module -Name $moduleName -Scope CurrentUser -Force
         } catch {
-            Write-Host "An error occurred while installing the module: $_"
+            Write-Host "An error occurred while installing the module: $_" -ForegroundColor Red
             exit
         }
     }
@@ -77,7 +82,7 @@ function Open-ESL ([string]$eslPath) {
         $json = $excelData | ConvertTo-Json
         return $json
     } catch {
-        Write-Host "An error occurred while opening the ESL file.  Check the path and try again: $_"
+        Write-Host "An error occurred while opening the ESL file.  Check the path and try again: $_" -ForegroundColor Red
         exit
     }
 }
@@ -92,11 +97,11 @@ The ESL File does not contain the Hostname of this machine.
 This means either the machine was not named properly, or there is a problem with the ESL file.
 Please validate the hostname and ESL file. 
 "@
-            Write-Host $message
+            Write-Host $message -ForegroundColor Red
             exit
         }
     } catch {
-        Write-Host "ESL File exception occurred.  Please check the ESL file and try again: $_"
+        Write-Host "ESL File exception occurred.  Please check the ESL file and try again: $_" -ForegroundColor Red
         exit
     }
     return $selectedRow.Domain
@@ -104,26 +109,25 @@ Please validate the hostname and ESL file.
 
 function Test-Attributes ($eslFilePath) {
     $hostName = hostname
+    Install-ExcelModule
     $jsonOutput = Open-ESL $eslFilePath
     $eslDomain = Get-ESLDomain $jsonOutput $hostName
     $machineDomain = Get-Domain
     if ($eslDomain -eq $machineDomain) {
-        Write-Host "Hostname $hostName matches ESL File"
-        Write-Host "Domain $machineDomain matches ESL File"
+        Write-Host "Hostname $hostName matches ESL File" -ForegroundColor Green
+        Write-Host "Domain $machineDomain matches ESL File" -ForegroundColor Green
     } else {
-        Write-Host "Domain does not match the ESL File"
-        Write-Host "Machine has joined $machineDomain"
-        Write-Host "ESL States the domain should be $eslDomain"
+        Write-Host "Domain does not match the ESL File" -ForegroundColor Red
+        Write-Host "Machine has joined $machineDomain" -ForegroundColor Red
+        Write-Host "ESL States the domain should be $eslDomain" -ForegroundColor Red
         exit
     }
     Get-Inventory "TrendMicro*", "Cortex*", "OpsRamp*"
 
 }
 
-params (
-    [string]$ESLFilePath
-)
-
+Test-Privilege
+Install-ExcelModule
 Test-Attributes $ESLFilePath
 
 
