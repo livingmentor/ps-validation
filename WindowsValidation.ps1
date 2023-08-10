@@ -122,7 +122,7 @@ function Test-Attributes ($eslFilePath) {
         Write-Host "ESL States the domain should be $eslDomain" -ForegroundColor Red
         exit
     }
-    Get-Inventory "TrendMicro*", "Cortex*", "OpsRamp*"
+    Get-Inventory "Trend Micro*", "Cortex*", "OpsRamp*"
 
 }
 

@@ -17,7 +17,7 @@ def is_software_installed(partial_name):
     try:
         # For apt (Debian/Ubuntu based systems)
         result = subprocess.run(['dpkg', '-l'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        if partial_name in result.stdout.decode():
+        if partial_name.replace("_", "-") in result.stdout.decode():
             return True
     except:
         pass
@@ -35,7 +35,7 @@ def is_software_installed(partial_name):
 hostName = socket.getfqdn()
 
 print(f"Scanning host: {hostName}")
-software = ["TrendMicro", "Cortex", "OpsRamp", "Pyth"]
+software = ["ds_agent", "cortex", "opsramp"]
 for app in software:
     if is_software_installed(app):
         print(f"{TextColors.GREEN}Software related to '{app}' is installed!{TextColors.RESET}")
